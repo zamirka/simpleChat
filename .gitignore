@@ -12,4 +12,4 @@
 *.out
 
 # ignore ide filder
-.vccode
+.vccode/
