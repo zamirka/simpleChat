@@ -13,3 +13,6 @@
 
 # ignore ide filder
 .vscode/
+
+# ignore secrets file
+secrets.json
