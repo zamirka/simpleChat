@@ -12,6 +12,8 @@ import (
 	"sync"
 	"text/template"
 
+	"github.com/stretchr/objx"
+
 	"github.com/stretchr/gomniauth"
 	"github.com/stretchr/gomniauth/providers/facebook"
 	"github.com/stretchr/gomniauth/providers/github"
@@ -23,6 +25,20 @@ type templateHandler struct {
 	once     sync.Once
 	filename string
 	templ    *template.Template
+}
+
+// ServerHttp handles the HTTP request
+func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	t.once.Do(func() {
+		t.templ = template.Must(template.ParseFiles(filepath.Join("templates", t.filename)))
+	})
+	data := map[string]interface{}{
+		"Host": r.Host,
+	}
+	if authCookie, err := r.Cookie("auth"); err == nil {
+		data["UserData"] = objx.MustFromBase64(authCookie.Value)
+	}
+	t.templ.Execute(w, data)
 }
 
 // Secrets is a structure for storing secrets
@@ -47,14 +63,6 @@ type Secret struct {
 	Key        string `json:"key"`
 	Secret     string `json:"secret"`
 	URL        string `json:"url"`
-}
-
-// ServerHttp handles the HTTP request
-func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t.once.Do(func() {
-		t.templ = template.Must(template.ParseFiles(filepath.Join("templates", t.filename)))
-	})
-	t.templ.Execute(w, r)
 }
 
 func main() {
